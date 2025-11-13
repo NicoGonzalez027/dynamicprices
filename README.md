@@ -32,7 +32,7 @@ Este repositorio contiene todo lo necesario para reproducir el entrenamiento y d
 * Exponer el modelo en una API REST (`FastAPI`).
 * Ejecutarlo desde Google Colab y publicar una URL pública con `ngrok`.
 
-## 2. Estructura recomendada del repositorio
+## 2. Estructura del repositorio
 
 ```
 uber-dynamic-pricing/
