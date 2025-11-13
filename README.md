@@ -253,6 +253,3 @@ El modelo logra predecir precios con alta precisión, aprovechando variables con
 
 ---
 
-## 14. 📘 Créditos
-
-Desarrollado por [Tu Nombre] — Proyecto académico sobre **Predicción de Precios Dinámicos con Machine Learning**.
