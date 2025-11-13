@@ -17,11 +17,9 @@ Proyecto que implementa un pipeline completo de Machine Learning para predecir e
 8. Evaluación y Resultados
 9. Persistencia del Modelo
 10. Despliegue de la API con FastAPI
-11. 🚀 Cómo Ejecutar el Proyecto en Google Colab
-12. 💾 Persistencia y Consejos
-13. 📊 Resultados
-14. 📘 Créditos
-
+11. Cómo Ejecutar el Proyecto en Google Colab
+12. Persistencia y Consejos
+13. Resultados
 ---
 
 ## 1. Visión general
@@ -208,7 +206,7 @@ El endpoint principal para realizar predicciones.
 
 ---
 
-## 11. 🚀 Cómo Ejecutar el Proyecto en Google Colab
+## 11. Cómo Ejecutar el Proyecto en Google Colab
 
 Este proyecto está diseñado para ejecutarse directamente en **Google Colab**.
 
@@ -239,7 +237,7 @@ Puedes usar esta URL para probar la API desde cualquier cliente (Postman, curl, 
 
 ---
 
-## 12. 💾 Persistencia y Consejos
+## 12. Persistencia y Consejos
 
 * Los archivos `.pkl` generados se guardan en la sesión temporal de Colab.
 * Descárgalos manualmente si deseas conservarlos tras reiniciar el entorno.
@@ -247,7 +245,7 @@ Puedes usar esta URL para probar la API desde cualquier cliente (Postman, curl, 
 
 ---
 
-## 13. 📊 Resultados
+## 13. Resultados
 
 El modelo logra predecir precios con alta precisión, aprovechando variables contextuales como hora, día, distancia y tipo de vehículo, permitiendo un sistema de **pricing dinámico** que puede ser usado como base para dashboards o decisiones de negocio.
 
