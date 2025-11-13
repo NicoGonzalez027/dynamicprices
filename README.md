@@ -11,19 +11,17 @@ Proyecto que implementa un pipeline completo de Machine Learning para predecir e
 1. Visión general
 2. Estructura del repositorio
 3. Requerimientos
-4. Instrucciones rápidas (Quickstart)
-5. Descripción del pipeline
-6. Ingeniería de características
-7. Preprocesamiento y manejo de outliers
-8. Entrenamiento y optimización
-9. Evaluación y métricas
-10. Endpoints de la API
-11. Ejemplos de uso (curl / Python)
-12. Despliegue en Colab + ngrok
-13. Persistencia y seguridad de credenciales
-14. CI / Tests recomendados
-15. Contribuir
-16. Licencia
+4. Carga y Limpieza de Datos
+5. Ingeniería de Características
+6. Preprocesamiento Avanzado
+7. Optimización del Modelo
+8. Evaluación y Resultados
+9. Persistencia del Modelo
+10. Despliegue de la API con FastAPI
+11. 🚀 Cómo Ejecutar el Proyecto en Google Colab
+12. 💾 Persistencia y Consejos
+13. 📊 Resultados
+14. 📘 Créditos
 
 ---
 
@@ -41,7 +39,7 @@ Este repositorio contiene todo lo necesario para reproducir el entrenamiento y d
 
 ```
 uber-dynamic-pricing/
-├─ data/                       # 
+├─ data/                       # Datos crudos y procesados
 ├─ notebooks/                  # Notebooks exploratorios y entrenamiento
 │  ├─ Proyecto_uber.ipynb
 ├─ .gitignore
@@ -50,9 +48,7 @@ uber-dynamic-pricing/
 
 ---
 
-## 3. Librerias usadas
-
-
+## 3. Librerías usadas
 
 ```text
 numpy
@@ -71,15 +67,9 @@ black
 flake8
 ```
 
-# Sistema de Precios Dinámicos de Uber
-
-> **Predicción de Booking Value (Precio de Viaje)**
-
-Proyecto completo de Machine Learning desarrollado en **Google Colab** para predecir el precio de los viajes de Uber, optimizar un modelo de **GradientBoostingRegressor**, y desplegarlo como API REST con **FastAPI** y **ngrok**.
-
 ---
 
-## 1. Carga y Limpieza de Datos
+## 4. Carga y Limpieza de Datos
 
 * Se utiliza **kagglehub** para descargar el dataset `ncr_ride_bookings.csv`.
 * Se filtran los datos para incluir únicamente los viajes con estado `Completed`.
@@ -87,7 +77,7 @@ Proyecto completo de Machine Learning desarrollado en **Google Colab** para pred
 
 ---
 
-## 2. Ingeniería de Características (Feature Engineering)
+## 5. Ingeniería de Características (Feature Engineering)
 
 Para mejorar la capacidad predictiva del modelo, se crearon las siguientes características:
 
@@ -112,21 +102,21 @@ Para mejorar la capacidad predictiva del modelo, se crearon las siguientes carac
 
 ---
 
-## 3. Preprocesamiento Avanzado
+## 6. Preprocesamiento Avanzado
 
 * **Manejo de Outliers:** Se realizó un análisis de la variable objetivo (**Booking Value**) y se decidió filtrar los valores atípicos extremos. Se conservaron únicamente los datos entre el **percentil 5 y el 95** para estabilizar el modelo.
 * **Transformación Logarítmica:** Dado que la variable objetivo presentaba una distribución sesgada, se aplicó una transformación `np.log1p` para normalizarla. Esto mejora el aprendizaje del modelo y reduce el error.
 
 ---
 
-## 4. Optimización del Modelo
+## 7. Optimización del Modelo
 
 * **Modelo Base:** `GradientBoostingRegressor`.
 * **Optimización de Hiperparámetros:** Se implementó `GridSearchCV` para encontrar la mejor combinación de parámetros (`n_estimators`, `learning_rate`, `max_depth`, etc.) que minimizara el **Error Cuadrático Medio (MSE)**.
 
 ---
 
-## 5. Evaluación y Resultados
+## 8. Evaluación y Resultados
 
 El modelo fue entrenado con las características optimizadas y la transformación logarítmica. Para la evaluación, las predicciones se revirtieron a su escala original con `np.expm1`.
 
@@ -144,13 +134,13 @@ Las características más influyentes fueron:
 
 ---
 
-## 6. Persistencia del Modelo
+## 9. Persistencia del Modelo
 
 El modelo optimizado (`best_model`) y el codificador (`encoder`) se guardaron como archivos `.pkl` usando `joblib`, para su posterior uso en la API.
 
 ---
 
-## 7. Despliegue de la API con FastAPI
+## 10. Despliegue de la API con FastAPI
 
 El proyecto incluye una **API REST** para consumir el modelo entrenado.
 
@@ -219,7 +209,7 @@ El endpoint principal para realizar predicciones.
 
 ---
 
-## 🚀 Cómo Ejecutar el Proyecto en Google Colab
+## 11. 🚀 Cómo Ejecutar el Proyecto en Google Colab
 
 Este proyecto está diseñado para ejecutarse directamente en **Google Colab**.
 
@@ -250,7 +240,7 @@ Puedes usar esta URL para probar la API desde cualquier cliente (Postman, curl, 
 
 ---
 
-## 💾 Persistencia y Consejos
+## 12. 💾 Persistencia y Consejos
 
 * Los archivos `.pkl` generados se guardan en la sesión temporal de Colab.
 * Descárgalos manualmente si deseas conservarlos tras reiniciar el entorno.
@@ -258,14 +248,12 @@ Puedes usar esta URL para probar la API desde cualquier cliente (Postman, curl, 
 
 ---
 
-## 📊 Resultados
+## 13. 📊 Resultados
 
 El modelo logra predecir precios con alta precisión, aprovechando variables contextuales como hora, día, distancia y tipo de vehículo, permitiendo un sistema de **pricing dinámico** que puede ser usado como base para dashboards o decisiones de negocio.
 
 ---
 
-## 📘 Créditos
+## 14. 📘 Créditos
 
 Desarrollado por [Tu Nombre] — Proyecto académico sobre **Predicción de Precios Dinámicos con Machine Learning**.
-
-
