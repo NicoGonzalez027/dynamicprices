@@ -2,12 +2,17 @@
 
 **Sistema de Precios Dinámicos para Viajes en Uber**
 
-Este proyecto desarrolla un sistema de precios dinámicos que predice el valor óptimo de un viaje en Uber, basándose en patrones de demanda y características temporales, utilizando técnicas de machine learning.
-
-Tomado a partir de dataset: https://www.kaggle.com/datasets/yashdevladdha/uber-ride-analytics-dashboard
+Este proyecto implementa un pipeline completo de Machine Learning para predecir el precio de los viajes de Uber (Booking Value). El proceso incluye la carga de datos, un preprocesamiento avanzado, optimización de hiperparámetros de un modelo GradientBoostingRegressor, y el despliegue del modelo final como una API REST usando FastAPI y ngrok.
 
 <img width="1000" height="600" alt="image" src="https://github.com/user-attachments/assets/c6c9c44d-59e2-4012-b476-9ee096927806" />
 
+**Stack Tecnológico**
+
+* Análisis y Modelado: Python, Pandas, Numpy, Scikit-learn (para GradientBoostingRegressor, GridSearchCV, OneHotEncoder), Joblib.
+* Visualización: Matplotlib, Seaborn.
+* Carga de Datos: KaggleHub.
+* Despliegue API: FastAPI, Uvicorn.
+* Túnel (Hosting): Ngrok (para exponer la API desde Colab).
 
 **Metodología y Enfoque Técnico**
 El núcleo del sistema es un modelo de regresión entrenado con el algoritmo 
