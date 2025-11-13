@@ -1,6 +1,5 @@
 # Sistema de Precios Dinámicos de Uber
 
-> **Predicción de Booking Value (Precio de Viaje)**
 
 Proyecto que implementa un pipeline completo de Machine Learning para predecir el precio de viajes de Uber, entrenar y optimizar un modelo de `GradientBoostingRegressor` y desplegarlo como API REST con **FastAPI**. Pensado para ejecutarse en Google Colab y exponer la API con **ngrok**.
 
