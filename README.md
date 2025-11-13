@@ -1,90 +1,429 @@
-# Predicción de Precios Dinámicos de Uber
+# Sistema de Precios Dinámicos de Uber
 
-**Sistema de Precios Dinámicos para Viajes en Uber**
+> **Predicción de Booking Value (Precio de Viaje)**
 
-Este proyecto implementa un pipeline completo de Machine Learning para predecir el precio de los viajes de Uber (Booking Value). El proceso incluye la carga de datos, un preprocesamiento avanzado, optimización de hiperparámetros de un modelo GradientBoostingRegressor, y el despliegue del modelo final como una API REST usando FastAPI y ngrok.
+Proyecto que implementa un pipeline completo de Machine Learning para predecir el precio de viajes de Uber, entrenar y optimizar un modelo de `GradientBoostingRegressor` y desplegarlo como API REST con **FastAPI**. Pensado para ejecutarse en Google Colab y exponer la API con **ngrok**.
 
-<img width="1000" height="600" alt="image" src="https://github.com/user-attachments/assets/c6c9c44d-59e2-4012-b476-9ee096927806" />
+---
 
-# Stack Tecnológico
+## Contenido de este README
 
-* Análisis y Modelado: Python, Pandas, Numpy, Scikit-learn (para GradientBoostingRegressor, GridSearchCV, OneHotEncoder), Joblib.
-* Visualización: Matplotlib, Seaborn.
-* Carga de Datos: KaggleHub.
-* Despliegue API: FastAPI, Uvicorn.
-* Túnel (Hosting): Ngrok (para exponer la API desde Colab).
+1. Visión general
+2. Estructura del repositorio
+3. Requerimientos
+4. Instrucciones rápidas (Quickstart)
+5. Descripción del pipeline
+6. Ingeniería de características
+7. Preprocesamiento y manejo de outliers
+8. Entrenamiento y optimización
+9. Evaluación y métricas
+10. Endpoints de la API
+11. Ejemplos de uso (curl / Python)
+12. Despliegue en Colab + ngrok
+13. Persistencia y seguridad de credenciales
+14. CI / Tests recomendados
+15. Contribuir
+16. Licencia
 
+---
 
-# Flujo del Proyecto de Machine Learning
-El núcleo de este proyecto es la optimización de un modelo de regresión para reducir el error de predicción (MSE).
+## 1. Visión general
 
-1. Carga y Limpieza de Datos
-Se utiliza kagglehub para descargar el dataset ncr_ride_bookings.csv.
-Se filtran los datos para incluir únicamente los viajes con estado "Completed".
+Este repositorio contiene todo lo necesario para reproducir el entrenamiento y despliegue de un modelo de precios dinámicos para viajes. Está pensado para:
 
-Se combinan las columnas Date y Time en un único objeto DateTime para facilitar la extracción de características temporales.
+* Reproducir preprocesamiento y feature engineering.
+* Ejecutar búsqueda de hiperparámetros (GridSearchCV).
+* Serializar modelo y encoder con `joblib`.
+* Exponer el modelo en una API REST (`FastAPI`).
+* Ejecutarlo desde Google Colab y publicar una URL pública con `ngrok`.
 
-2. Ingeniería de Características (Feature Engineering)
-Para mejorar la capacidad predictiva del modelo, se crearon las siguientes características:
+## 2. Estructura recomendada del repositorio
 
-Características Temporales:
+```
+uber-dynamic-pricing/
+├─ data/                       # (NO subir datos sensibles) csvs, muestras
+│  ├─ raw/                     # dataset original (no subir si es privado)
+│  └─ processed/               # datos filtrados y listos para modelar
+├─ notebooks/                  # Notebooks exploratorios y entrenamiento
+│  ├─ 01_exploration.ipynb
+│  └─ 02_training_gridsearch.ipynb
+├─ src/                        # Código fuente ejecutable
+│  ├─ data_loader.py           # funciones para cargar y limpiar
+│  ├─ features.py              # feature engineering
+│  ├─ preprocessing.py         # pipelines, encoders, transforms
+│  ├─ train.py                 # script para entrenar y guardar modelo
+│  ├─ predict.py               # wrappers para hacer una predicción local
+│  └─ api/                     # código FastAPI
+│     ├─ main.py               # app FastAPI
+│     ├─ models.py             # pydantic schemas
+│     └─ utils.py              # utilidades (carga joblib, etc.)
+├─ models/                     # modelos serializados (.pkl)
+│  ├─ best_model.pkl
+│  └─ encoder.pkl
+├─ tests/                      # pruebas unitarias
+│  ├─ test_features.py
+│  └─ test_api.py
+├─ .github/
+│  └─ workflows/ci.yml         # GitHub Actions
+├─ requirements.txt
+├─ .gitignore
+├─ README.md
+└─ LICENSE
+```
 
-Hour: La hora del día (0-23).
+---
 
-DayOfWeek: El día de la semana (0-6).
+## 3. Requerimientos
 
-Month: El mes del año.
+Archivo `requirements.txt` ejemplo (añadir versiones exactas si quieres reproducibilidad):
 
-IsWeekend: Booleano (1 si es sábado o domingo, 0 si no).
+```text
+numpy
+pandas
+scikit-learn
+joblib
+fastapi
+uvicorn
+python-multipart
+pydantic
+matplotlib
+seaborn
+ngrok
+pytest
+black
+flake8
+```
 
-IsPeakHour: Booleano (1 si la hora es considerada "pico" [7-9, 17-19], 0 si no).
+> Recomiendo usar `pip install -r requirements.txt` en un entorno virtual o en Colab.
 
-IsHolidayHour: Booleano (1 si es horario nocturno/valle [0-5, 23], 0 si no).
+---
 
-IsBusinessHour: Booleano (1 si es horario laboral estándar [8-17], 0 si no).
+## 4. Instrucciones rápidas (Quickstart)
 
-Características de Interacción:
+1. Clona el repositorio:
 
-Distance_Peak: Ride Distance multiplicado por IsPeakHour.
+```bash
+git clone https://github.com/tu_usuario/uber-dynamic-pricing.git
+cd uber-dynamic-pricing
+```
 
-Distance_Weekend: Ride Distance multiplicado por IsWeekend.
+2. Instala dependencias:
 
-Codificación Categórica:
+```bash
+python -m venv venv
+source venv/bin/activate   # o venv\Scripts\activate en Windows
+pip install -r requirements.txt
+```
 
-Vehicle Type se codifica usando OneHotEncoder para convertir los tipos de vehículo en columnas numéricas.
+3. Entrena modelo (ejemplo):
 
-3. Preprocesamiento Avanzado
-Manejo de Outliers: Se realizó un análisis de la variable objetivo (Booking Value) y se decidió filtrar los valores atípicos extremos. Se conservaron únicamente los datos entre el percentil 5 y el 95 para estabilizar el modelo.
+```bash
+python src/train.py --data_path data/processed/train.csv --output_dir models/
+```
 
-Transformación Logarítmica: La variable objetivo (Booking Value) presentaba una distribución sesgada. Se aplicó una transformación logarítmica (np.log1p) para normalizar su distribución. Esto ayuda al modelo de Gradient Boosting a aprender de manera más efectiva y reducir el error.
+4. Ejecuta la API localmente:
 
-4. Optimización del Modelo
-Modelo Base: Se utilizó un GradientBoostingRegressor.
+```bash
+uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-Búsqueda de Hiperparámetros: Se implementó GridSearchCV para encontrar la combinación óptima de hiperparámetros (como n_estimators, learning_rate, max_depth, etc.) que minimizara el error cuadrático medio (neg_mean_squared_error).
+5. (Opcional) Lanza ngrok en Colab y publica la URL.
 
-5. Evaluación y Resultados
-El modelo fue entrenado con las características optimizadas y la transformación logarítmica. Para la evaluación, las predicciones se revirtieron a su escala original usando np.expm1.
+---
 
-El resultado fue una reducción significativa del MSE (Error Cuadrático Medio) en comparación con un modelo base no optimizado, demostrando la efectividad del feature engineering y la optimización de hiperparámetros.
+## 5. Descripción del pipeline (resumen técnico)
 
-Importancia de Características: Las características más influyentes para el modelo optimizado fueron:
+* **Carga y filtrado**: solo registros con `status == "Completed"`.
+* **Datetime**: combinación de `Date` + `Time` a `datetime` y extracción de `hour`, `day_of_week`, `month`.
+* **Features temporales**: `is_weekend`, `is_peak_hour`, `is_holiday_hour`, `is_business_hour`.
+* **Interacciones**: `distance_peak`, `distance_weekend`.
+* **Categorical encoding**: `vehicle_type` -> `OneHotEncoder`.
+* **Outliers**: filtrar percentiles 5 y 95 de `booking_value`.
+* **Target transform**: `np.log1p(booking_value)` durante entrenamiento y `np.expm1(pred)` al predecir.
 
-Ride Distance
+---
 
-Distance_Weekend
+## 6. Ingeniería de características (detalles)
 
-Hour
+Incluye funciones reutilizables en `src/features.py`. Ejemplo breve para `is_peak_hour`:
 
-Distance_Peak
+```python
+def is_peak(hour: int) -> int:
+    return int(hour in list(range(7,10)) + list(range(17,20)))
+```
 
-DayOfWeek
+Asegúrate de que el pipeline de features devuelva siempre la misma lista y orden de columnas que el modelo espera. Documenta en `src/api/models.py` el `Pydantic` schema de entrada.
 
-6. Persistencia del Modelo
-El modelo optimizado (best_model) y el codificador (encoder) se guardaron en archivos .pkl usando joblib para su posterior uso en la API.
+---
 
+## 7. Preprocesamiento y manejo de outliers
 
-**Dashboard dinamico que permite tomar decisiones de negocio.**
-<img width="1274" height="700" alt="image" src="https://github.com/user-attachments/assets/d205268a-a90e-4c8a-bc08-b2c4f0bb1cfc" />
+* Antes de entrenar, filtrar por percentil 5 y 95 del objetivo.
+* Aplicar `np.log1p` a la target para estabilizar varianza.
+* Guardar el `scaler/transformer` si lo usas (ej.: `joblib.dump(transformer, "models/transformer.pkl")`).
+
+---
+
+## 8. Entrenamiento y optimización
+
+* Usa `GridSearchCV` con `scoring='neg_mean_squared_error'`.
+* Métricas a guardar:
+
+  * Mejor `params_`
+  * `best_score_`
+  * `cv_results_` (guardar a CSV para análisis)
+* Serializar `best_estimator_` y el `encoder`.
+
+---
+
+## 9. Evaluación y métricas
+
+* Entrena/valida con `train_test_split` o `TimeSeriesSplit` si los datos tienen dependencia temporal.
+* Reporta:
+
+  * MSE en escala log (train/val)
+  * MSE en escala original (tras aplicar `expm1`)
+  * MAE, R2
+* Genera gráficos: distribución de residuales, importancia de features (SHAP si quieres más profundidad).
+
+---
+
+## 10. Endpoints de la API
+
+### GET /
+
+Bienvenida y versión de la API.
+
+### GET /vehicle_types
+
+Devuelve la lista de `vehicle_type` que conoce el encoder.
+
+**Respuesta ejemplo**:
+
+```json
+{
+  "tipos_vehiculo_disponibles": ["Auto", "Bike", "Mini", "Prime", "Sedan"],
+  "total_tipos": 5
+}
+```
+
+### GET /features
+
+Lista completa de features que espera el modelo (orden importante).
+
+### POST /predict
+
+Request body (JSON):
+
+```json
+{
+  "hour": 20,
+  "day_of_week": 5,
+  "month": 11,
+  "is_weekend": 1,
+  "is_peak_hour": 0,
+  "is_holiday_hour": 0,
+  "is_business_hour": 0,
+  "ride_distance": 8.5,
+  "distance_peak": 0,
+  "distance_weekend": 8.5,
+  "vehicle_type": "Auto"
+}
+```
+
+Respuesta ejemplo:
+
+```json
+{
+  "estado": "éxito",
+  "precio_predicho": 145.72,
+  "moneda": "INR",
+  "caracteristicas_utilizadas": 18,
+  "tipo_vehiculo": "Auto"
+}
+```
+
+> Nota: valida siempre el schema con Pydantic en `src/api/models.py` para evitar inputs inválidos.
+
+---
+
+## 11. Ejemplos de uso
+
+**curl**:
+
+```bash
+curl -X POST "http://127.0.0.1:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{"hour":20, "day_of_week":5, "month":11, "is_weekend":1, "is_peak_hour":0, "is_holiday_hour":0, "is_business_hour":0, "ride_distance":8.5, "distance_peak":0, "distance_weekend":8.5, "vehicle_type":"Auto"}'
+```
+
+**Python (requests)**:
+
+```python
+import requests
+url = "http://127.0.0.1:8000/predict"
+payload = { ... }
+r = requests.post(url, json=payload)
+print(r.json())
+```
+
+---
+
+## 12. Despliegue en Colab + ngrok
+
+* Incluye en el notebook la instalación de `pyngrok` y la llamada `ngrok.set_auth_token("TU_TOKEN")`.
+* Evita subir el token a GitHub. Mejor usar variables de entorno o inputs en Colab.
+* Ejemplo de comando para exponer la app (en Colab):
+
+```python
+!uvicorn src.api.main:app --host 0.0.0.0 --port 8000 &
+from pyngrok import ngrok
+public_url = ngrok.connect(8000)
+print(public_url)
+```
+
+---
+
+## 13. Persistencia y seguridad de credenciales
+
+* **Nunca** subir tokens o credenciales a GitHub.
+* Usa `.env` o GitHub Secrets para CI.
+* Añade `.env` en `.gitignore`.
+
+Ejemplo `.gitignore` mínimo:
+
+```
+venv/
+__pycache__/
+*.pyc
+.env
+models/*.pkl
+data/raw/
+```
+
+---
+
+## 14. CI / Tests recomendados
+
+* Tests unitarios para:
+
+  * `features.py` (valores esperados)
+  * `preprocessing.py` (salidas y shapes)
+  * `src/api` (endpoints con testclient de FastAPI)
+* GitHub Actions: correr `pytest`, `black --check` y `flake8`.
+
+Ejemplo de workflow (`.github/workflows/ci.yml`):
+
+```yaml
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        run: pytest -q
+```
+
+---
+
+## 15. Contribuir
+
+Incluye un `CONTRIBUTING.md` con:
+
+* Cómo abrir issues y pull requests.
+* Estándar de commits.
+* Guía de estilo (black / flake8).
+* Revisión de PRs.
+
+Breve plantilla de `CONTRIBUTING.md`:
+
+```
+1. Fork repo
+2. Crear branch feature/<tu-cambio>
+3. Mantener tests y documentación actualizada
+4. Abrir PR y asignar reviewers
+```
+
+---
+
+## 16. Licencia
+
+Añade una licencia (por ejemplo MIT) en `LICENSE`.
+
+---
+
+## Archivos de ejemplo para copiar/pegar
+
+**requirements.txt** (ejemplo corto):
+
+```text
+numpy
+pandas
+scikit-learn
+joblib
+fastapi
+uvicorn
+pyngrok
+pydantic
+pytest
+```
+
+**.gitignore** minimal:
+
+```
+venv/
+__pycache__/
+*.pyc
+.env
+models/*.pkl
+data/raw/
+```
+
+**src/api/main.py** (esqueleto):
+
+```python
+from fastapi import FastAPI
+import joblib
+from src.api.models import PredictRequest, PredictResponse
+
+app = FastAPI(title="Uber Dynamic Pricing API")
+
+MODEL_PATH = "models/best_model.pkl"
+ENCODER_PATH = "models/encoder.pkl"
+
+model = joblib.load(MODEL_PATH)
+encoder = joblib.load(ENCODER_PATH)
+
+@app.get("/")
+def read_root():
+    return {"message": "Bienvenido a la API de Precios Dinámicos"}
+
+@app.post("/predict", response_model=PredictResponse)
+def predict(payload: PredictRequest):
+    # transformar input -> vector con mismas columnas esperadas
+    # predecir en escala log, aplicar expm1
+    return {"estado":"éxito","precio_predicho": 0.0, "moneda":"INR"}
+```
+
+---
+
+## Siguientes pasos (sugeridos)
+
+* Añadir notebooks con visualizaciones y resultados de GridSearch.
+* Documentar `features.py` con docstrings y tests.
+* Añadir un script `make_prediction.py` y ejemplos de requests.
+* Integrar SHAP para explicar predicciones si lo deseas.
+
+---
 
 
